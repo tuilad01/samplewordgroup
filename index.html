@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Index</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <nav class="navbar-bottom">
+        <a href="#title-word">Word</a>
+        <a href="#title-group">Group</a>
+    </nav>
+
+    <h1 id="title-word">Word</h1>
+    <ol id="list-word"></ol>
+
+    <section>
+        <form id="frm-word" action="/word" method="POST">
+            <input type="hidden" id="textid" name="_id">
+            <input id="textname" name="name" placeholder="name">
+            <input id="textmean" name="mean" placeholder="mean">
+            <input id="textgroups" name="groups" placeholder="group id">
+            <button id="button-submit-word" name="submit" type="submit" value="create">Add new</button>
+            <button id="button-update-word" class="button-update" type="button" value="update">Update</button>
+            <button id="button-cancel-word" class="button-cancel" type="button" value="cancel">Cancel</button>
+        </form>
+    </section>
+
+
+
+    <section>
+        <hr>
+        <div>
+            <input id="search-box-word" type="text" placeholder="search...">
+        </div>
+
+        <ul id="dataTableWord"></ul>
+        <hr>
+    </section>
+
+    <!-- Group Section -->
+
+    <h1 id="title-group">Group</h1>
+    <ol id="list"></ol>
+
+    <section>
+        <form action="/group" method="POST">
+            <input id="textname" name="name" placeholder="name">
+            <input name="mean" placeholder="mean">
+            <input name="groups" placeholder="group id">
+            <button id="submitFrm" type="submit">Submit</button>
+        </form>
+    </section>
+
+    
+
+    <section>
+        <hr>
+        <div>
+            <input type="text" placeholder="search...">
+        </div>
+
+        <ul id="dataTable"></ul>
+        <hr>
+    </section>
+
+    <footer></footer>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

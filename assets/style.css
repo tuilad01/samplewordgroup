@@ -1,0 +1,76 @@
+section {
+    margin: 20px 0;
+}
+
+.navbar-bottom {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background-color: #ddd;
+    text-align: center;
+}
+
+.navbar-bottom>a {
+    padding: 10px 0;
+}
+
+footer {
+    height: 20px;
+}
+
+.copy {
+    text-decoration: underline rgb(0, 0, 238);
+    color: rgb(0, 0, 238);
+    margin-left: 10px;
+}
+
+.copy:hover,
+.copy:active {
+    color: rgb(255, 0, 0);
+    text-decoration-color: rgb(255, 0, 0);
+    cursor: pointer;
+}
+
+.update {
+    text-decoration: underline rgb(0, 0, 238);
+    color: rgb(0, 0, 238);
+    margin-left: 10px;
+}
+
+.update:hover,
+.update:active {
+    color: rgb(255, 0, 0);
+    text-decoration-color: rgb(255, 0, 0);
+    cursor: pointer;
+}
+
+.delete {
+    text-decoration: underline rgb(0, 0, 238);
+    color: rgb(0, 0, 238);
+    margin-left: 10px;
+}
+
+.delete:hover,
+.delete:active {
+    color: rgb(255, 0, 0);
+    text-decoration-color: rgb(255, 0, 0);
+    cursor: pointer;
+}
+.button-update {
+    display: none;
+}
+
+.button-cancel {
+    display: none;
+}
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+
+    select,
+    textarea,
+    input {
+        font-size: 16px;
+    }
+}
