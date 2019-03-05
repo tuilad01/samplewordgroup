@@ -28,33 +28,92 @@ router.get('/', async (req, res, next) => {
 
 // define the about route
 router.post('/', async (req, res, next) => {
+    const words = req.body.words.trim() === "" ? [] : req.body.words.split(",").map(d => d.trim());
+    const name = req.body.name.trim();
+    const description = req.body.description.trim();
+
+    let arrError = [];
+    let groupSaved = [];
+
+    const groupNew = new groupModel({
+        _id: new mongoose.Types.ObjectId(),
+        name: name,
+        description: description,
+        words: words
+    });
+
     try {
-        const group = new groupModel({
-            _id: new mongoose.Types.ObjectId(),
-            name: req.body.name,
-            description: req.body.description,
-            groups: req.body.groups
-        });
+        const response = await groupNew.save();
+        groupSaved.push(response);
+    } catch (error) {
+        console.error(error);
+        arrError.push(error.message);
+    }
+    return res.json({
+        error: arrError,
+        saved: groupSaved
+    });
+
+});
+
+router.put("/", async (req, res, next) => {
+    const id = req.body._id;
+    if (!id) {
+        return res.send({ error: "request error" });
+    }
+
+    const words = req.body.words.trim() === "" ? [] : req.body.words.split(",").map(d => d.trim());
+    const name = req.body.name.trim();
+    const description = req.body.description.trim();
+
+    let arrError = [];
+    let groupSaved = [];
+
+    const group = await groupModel.findById(id);
+    if (!group) {
+        return res.send({ error: "group _id not found" });
+    }
+    try {
+        group.name = name;
+        group.description = description;
+        group.words = words;
 
         const response = await group.save();
-        res.json(response);
+        groupSaved.push(response);
     } catch (error) {
-        next(error);
+        console.error(error);
+        arrError.push(error.message);
     }
+
+    return res.json({
+        error: arrError,
+        saved: wordSaved
+    });
+
 });
 
-// router.put("/", (req, res, next) => {
-//     res.send('Birds home page')
-// });
+router.delete("/", async (req, res, next) => {
+    const id = req.body._id;
+    if (!id) return res.send({ error: "request error" });
 
-// router.delete("/", (req, res, next) => {
-//     res.send('Birds home page')
-// });
+    let arrError = [];
+    let groupSaved = [];
 
-router.post("/create", (req, res, next) => {
-    res.send('Birds home page')
+    const group = await groupModel.findById(id);
+    if (!group) return res.send({ error: "group _id not found" });
+
+    try {
+        const response = await group.remove();
+        groupSaved.push(response);
+    } catch (error) {
+        console.error(error);
+        arrError.push(error.message);
+    }
+
+    return res.json({
+        error: arrError,
+        saved: groupSaved
+    });
 });
-
-
 
 module.exports = router

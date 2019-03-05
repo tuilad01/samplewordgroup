@@ -22,11 +22,20 @@ function RemoveElement(id) {
 function UpdateElement(data) {
     var li = document.getElementById(data._id);
 
-    li.setAttribute("data-name", data.name);
-    li.setAttribute("data-mean", data.mean);
-    li.setAttribute("data-groups", data.groups.join(","));
-    
-    li.childNodes[1].innerText = `${data.name} - ${data.mean}`; // textContent or innerText
+    let text = [];
+    for (let key in data) {
+        if (key === "_id") continue;
+
+        if (data[key] instanceof Array) {
+            li.setAttribute(`data-${key}`, data[key].join(","));
+        } else {
+            li.setAttribute(`data-${key}`, data[key]);
+
+            text.push(data[key]);
+        }
+    }
+
+    li.childNodes[1].innerText = text.join(" - "); // textContent or innerText
 }
 
 async function Update(request, url) {
@@ -34,39 +43,44 @@ async function Update(request, url) {
         const response = await fetch(url, {
             method: "PUT",
             body: JSON.stringify(request),
-            headers:{
+            headers: {
                 'Content-Type': 'application/json'
-              }
+            }
         });
-    
+
         const data = await response.json();
         if (data.error.length > 0) {
             alert(data.error[0]);
         } else {
             UpdateElement(data.saved[0]);
-        }        
+        }
     } catch (error) {
         alert(error);
     }
 }
-
-async function Delete(id, url) {
-    const result = confirm("Do you delete this word?");
-    if(!result) return;
+/**
+ * 
+ * @param {*} id _id
+ * @param {*} url /word or /group
+ * @param {*} message Do you want delete this word?
+ */
+async function Delete(id, url, message) {
+    const result = confirm(message);
+    if (!result) return;
 
     try {
         const response = await fetch(url, {
             method: "DELETE",
-            body: JSON.stringify({_id: id}),
-            headers:{
+            body: JSON.stringify({ _id: id }),
+            headers: {
                 'Content-Type': 'application/json'
-              }
+            }
         });
         const data = await response.json();
-        
+
         if (data.error.length > 0) {
             alert(data.error[0]);
-        } else {            
+        } else {
             RemoveElement(id);
         }
 
@@ -76,21 +90,26 @@ async function Delete(id, url) {
 
 }
 
-function FormUpdate(id) {
-    let wordElement = document.getElementById(id);
+function FormUpdate(id, frm, model) {
+    let element = document.getElementById(id);
 
-    const name = wordElement.getAttribute("data-name");
-    const mean = wordElement.getAttribute("data-mean");
-    const groups = wordElement.getAttribute("data-groups");
+    if (!element) {
+        alert("Form update not found element");
+    }
 
-    document.getElementById("textid").value = id;
-    document.getElementById("textname").value = name;
-    document.getElementById("textmean").value = mean || "";
-    document.getElementById("textgroups").value = groups || "";
+    frm.elements["_id"].value = id;
 
-    document.getElementById("button-submit-word").style.display = "none";
-    document.getElementById("button-update-word").style.display = "inline-block";
-    document.getElementById("button-cancel-word").style.display = "inline-block";
+    for (let i = 0; i < model.length; i++) {
+        const inputFrmName = model[i];
+        
+        const value = element.getAttribute(`data-${inputFrmName}`);
+
+        frm.elements[inputFrmName] = value || "";
+    }
+
+    frm.elements["submit"].style.display = "none";
+    frm.elements["update"].style.display = "inline-block";
+    frm.elements["cancel"].style.display = "inline-block";
 }
 
 function Cancel(form) {
@@ -102,20 +121,19 @@ function Cancel(form) {
             continue;
         }
 
-        if (form.elements[i].nodeName === "BUTTON" 
-        || (form.elements[i].nodeName === "INPUT" && form.elements[i].type === "submit")
-        || (form.elements[i].nodeName === "INPUT" && form.elements[i].type === "button")
-        || (form.elements[i].nodeName === "INPUT" && form.elements[i].type === "reset")
-        || form.elements[i].nodeName === "file"){
+        if (form.elements[i].nodeName === "BUTTON"
+            || (form.elements[i].nodeName === "INPUT" && form.elements[i].type === "submit")
+            || (form.elements[i].nodeName === "INPUT" && form.elements[i].type === "button")
+            || (form.elements[i].nodeName === "INPUT" && form.elements[i].type === "reset")
+            || form.elements[i].nodeName === "file") {
             continue;
         }
-        
+
         form.elements[i].value = "";
     }
-
-    document.getElementById("button-submit-word").style.display = "inline-block";
-    document.getElementById("button-update-word").style.display = "none";
-    document.getElementById("button-cancel-word").style.display = "none";
+    frm.elements["submit"].style.display = "inline-block";
+    frm.elements["update"].style.display = "none";
+    frm.elements["cancel"].style.display = "none";
 }
 
 function SerializeForm(form) {
@@ -189,7 +207,9 @@ function CreateElement(elementName, text) {
     // Append the text to <Element>
     return element;
 }
-
+/**
+ * TODO:  Watching this function 3/5/2019 9:57 PM
+ */
 function FillList(strData, listElement) {
     const arrName = strData.split(",");
     listElement.innerHTML = "";
@@ -221,9 +241,9 @@ function FetchData(data, listElement) {
         const li = CreateElement("LI", "");
 
         li.setAttribute("id", record._id);
-        li.setAttribute("data-name",record.name);
-        li.setAttribute("data-mean",record.mean);
-        li.setAttribute("data-groups",record.groups.join(","));
+        li.setAttribute("data-name", record.name);
+        li.setAttribute("data-mean", record.mean);
+        li.setAttribute("data-groups", record.groups.join(","));
 
         const span = CreateElement("SPAN", `${record.name} - ${record.mean}`);
 
@@ -233,11 +253,12 @@ function FetchData(data, listElement) {
 
         let update = CreateElement("I", "update");
         update.setAttribute("class", "update");
-        update.setAttribute("onclick", `FormUpdate('${record._id}')`);
+        const arrModel = ["name","mean","groups"];
+        update.setAttribute("onclick", `FormUpdate('${record._id}', ${document.getElementById("frm-word")}, ${arrModel})`);
 
         let delte = CreateElement("I", "delete");
         delte.setAttribute("class", "delete");
-        delte.setAttribute("onclick", `Delete('${record._id}', '/word')`);
+        delte.setAttribute("onclick", `Delete('${record._id}', '/word', "Do you want delete this word?")`);
 
 
         // text for li in span
@@ -277,9 +298,9 @@ function SearchDataTable(query, dataTable) {
 
 async function GetWord() {
     const response = await fetch("/word", {
-        method: "GET",        
+        method: "GET",
     });
-    const data = await response.json(); 
+    const data = await response.json();
     return data;
 }
 
@@ -289,7 +310,7 @@ async function Init() {
         FetchData(MOCK_DATA, document.getElementById("dataTableWord"));
     } else {
         FetchData(data, document.getElementById("dataTableWord"));
-    }   
+    }
 }
 
 function HandleError(errors) {
@@ -298,9 +319,9 @@ function HandleError(errors) {
     for (let i = 0; i < errors.length; i++) {
         const err = errors[i];
         const field = regex.exec(err)[0];
-        if(!field) continue;
+        if (!field) continue;
 
-        resultError.push(field);        
+        resultError.push(field);
     }
     return resultError;
 }
@@ -324,16 +345,16 @@ function HandleError(errors) {
         let request = SerializeForm(this);
 
         request.mean = request.mean || "";
-        
+
         const url = this.action;
         const method = "POST";
 
         const response = await fetch(url, {
-         method: method,
-         body: JSON.stringify(request),
-         headers: new Headers({
-            'Content-Type': 'application/json'
-         })
+            method: method,
+            body: JSON.stringify(request),
+            headers: new Headers({
+                'Content-Type': 'application/json'
+            })
         });
 
         const data = await response.json();
@@ -349,12 +370,12 @@ function HandleError(errors) {
     }, false);
 
     document.getElementById("button-update-word").addEventListener("click", async function (e) {
-        await Update(SerializeForm(document.getElementById("frm-word")), "/word");  
-    });    
+        await Update(SerializeForm(document.getElementById("frm-word")), "/word");
+    });
 
     document.getElementById("button-cancel-word").addEventListener("click", function (e) {
         Cancel(document.getElementById("frm-word"));
-   });    
+    });
 
 
     // Run fill list after 1s keyup text input
