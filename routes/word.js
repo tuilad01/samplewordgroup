@@ -122,10 +122,4 @@ router.delete("/", async (req, res, next) => {
     });
 });
 
-// router.post("/create", (req, res, next) => {
-//     res.send('Birds home page')
-// });
-
-
-
 module.exports = router

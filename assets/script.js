@@ -1,5 +1,24 @@
-const MOCK_DATA = [];
+
+const MOCK_DATA = [],
+BUTTON_NAME_SUBMIT = "submit",
+BUTTON_NAME_UPDATE = "update",
+BUTTON_NAME_CANCEL = "cancel";
+
+// Word
+const FORM_WORD = document.getElementById("frm-word"),
+DATA_TABLE_WORD = document.getElementById("dataTableWord"),
+LIST_ELEMENT_WORD = document.getElementById("list-word"),
+SEARCH_WORD = document.getElementById("search-box-word");
+
+
+// Group
+const DATA_TABLE_GROUP = document.getElementById("dataTableGroup"),
+FORM_GROUP = document.getElementById("frm-group"),
+LIST_ELEMENT_GROUP = document.getElementById("list-group"),
+SEARCH_GROUP = document.getElementById("search-box-group");
+
 let WORD_ID = "";
+let GROUP_ID = "";
 
 function copyToClipboard(secretInfo) {
     const body = document.getElementsByTagName("body")[0]
@@ -12,6 +31,10 @@ function copyToClipboard(secretInfo) {
     document.execCommand('copy');
 
     body.removeChild(tempInput);
+}
+
+function ControlButton(form, buttons) {
+    return buttons.map(d => form[d.name].style.display = d.display);
 }
 
 function RemoveElement(id) {
@@ -58,12 +81,7 @@ async function Update(request, url) {
         alert(error);
     }
 }
-/**
- * 
- * @param {*} id _id
- * @param {*} url /word or /group
- * @param {*} message Do you want delete this word?
- */
+
 async function Delete(id, url, message) {
     const result = confirm(message);
     if (!result) return;
@@ -94,17 +112,17 @@ function FormUpdate(id, frm, model) {
     let element = document.getElementById(id);
 
     if (!element) {
-        alert("Form update not found element");
+        return alert("Form update not found element");
     }
 
-    frm.elements["_id"].value = id;
+    frm["_id"].value = id;
 
     for (let i = 0; i < model.length; i++) {
         const inputFrmName = model[i];
-        
+
         const value = element.getAttribute(`data-${inputFrmName}`);
 
-        frm.elements[inputFrmName] = value || "";
+        frm[inputFrmName].value = value || "";
     }
 
     frm.elements["submit"].style.display = "none";
@@ -131,9 +149,13 @@ function Cancel(form) {
 
         form.elements[i].value = "";
     }
-    frm.elements["submit"].style.display = "inline-block";
-    frm.elements["update"].style.display = "none";
-    frm.elements["cancel"].style.display = "none";
+
+    ControlButton(frm,
+        [
+            { name: BUTTON_NAME_SUBMIT, display: "inline-block" },
+            { name: BUTTON_NAME_CANCEL, display: "none" },
+            { name: BUTTON_NAME_UPDATE, display: "none" }
+        ]);
 }
 
 function SerializeForm(form) {
@@ -210,29 +232,33 @@ function CreateElement(elementName, text) {
 /**
  * TODO:  Watching this function 3/5/2019 9:57 PM
  */
-function FillList(strData, listElement) {
-    const arrName = strData.split(",");
+function FillList() {
+    let listElement = arguments[0],
+        arrText = arguments[1];
+
     listElement.innerHTML = "";
 
-    const arrMean = QueryMeanWord();
-    for (let i = 0; i < arrName.length; i++) {
-        const text = arrName[i];
-        const mean = arrMean[i] || "";
+    // Create array wrapper array text: [[a, b, c...] [a, b, c...] ...]
+    for (let index = 2; index < arguments.length; index++) {
+        const arrName = arguments[index];
+
+        // wrapperArrText.push(arrName);
+        for (let i = 0; i < arrText.length; i++) {
+            arrText[i] += ` - ${arrName[i].trim()}`;
+        }
+    }
+
+    // Append row to list
+    for (let i = 0; i < arrText.length; i++) {
+        let text = arrText[i];
+
         if (!text) continue;
-        const li = CreateElement("LI", `${text.trim()} - ${mean}`);
+        const li = CreateElement("LI", text);
         listElement.appendChild(li);
     }
 }
 
-function QueryMeanWord() {
-    let result = [];
-    const arrMean = document.getElementById("textmean").value.split(",");
-    if (!arrMean) return result;
-
-    return arrMean.map(d => d.trim());
-}
-
-function FetchData(data, listElement) {
+function FetchData(data, listElement, model, frm, url) {
     // Clear data
     listElement.innerHTML = "";
 
@@ -240,25 +266,32 @@ function FetchData(data, listElement) {
         const record = data[i];
         const li = CreateElement("LI", "");
 
-        li.setAttribute("id", record._id);
-        li.setAttribute("data-name", record.name);
-        li.setAttribute("data-mean", record.mean);
-        li.setAttribute("data-groups", record.groups.join(","));
+        for (let j = 0; j < model.length; j++) {
+            const name = model[j] === "_id" ? "id" : model[j];
+            const key = name === "id" ? name : `data-${name}`;
+            const value = record[name] instanceof Array ? record[name].join(",") : record[name === "id" ? "_id" : name];
 
-        const span = CreateElement("SPAN", `${record.name} - ${record.mean}`);
+            li.setAttribute(key, value);
+        }
+
+
+        const span = CreateElement("SPAN", `${record.name} - ${record.mean || record.description}`);
 
         let copy = CreateElement("I", "copy");
         copy.setAttribute("class", "copy");
-        copy.setAttribute("onclick", `copyToClipboard('${record._id}')`);
+        copy.addEventListener("click", copyToClipboard.bind(null, record._id), false);
+        // copy.onclick = copyToClipboard(record._id);
 
         let update = CreateElement("I", "update");
         update.setAttribute("class", "update");
-        const arrModel = ["name","mean","groups"];
-        update.setAttribute("onclick", `FormUpdate('${record._id}', ${document.getElementById("frm-word")}, ${arrModel})`);
+        const arrModel = model.filter(d => d !== "_id");
+        update.addEventListener("click", FormUpdate.bind(null, record._id, frm, arrModel), false);
+        // update.onclick = FormUpdate(record._id, FORM_WORD, arrModel);
 
         let delte = CreateElement("I", "delete");
         delte.setAttribute("class", "delete");
-        delte.setAttribute("onclick", `Delete('${record._id}', '/word', "Do you want delete this word?")`);
+        delte.addEventListener("click", Delete.bind(null, record._id, url, "Do you want delete this record?"), false);
+        // delte.onclick = Delete(record._id, '/word', "Do you want delete this word?");
 
 
         // text for li in span
@@ -304,12 +337,29 @@ async function GetWord() {
     return data;
 }
 
+async function GetGroup() {
+    const response = await fetch("/group", {
+        method: "GET",
+    });
+    const data = await response.json();
+    return data;
+}
+
 async function Init() {
-    const data = await GetWord();
-    if (!data) {
-        FetchData(MOCK_DATA, document.getElementById("dataTableWord"));
+    const words = await GetWord();
+
+    if (!words) {
+        FetchData(MOCK_DATA, DATA_TABLE_WORD, ["_id", "name", "mean", "groups"], FORM_WORD, "/word");
     } else {
-        FetchData(data, document.getElementById("dataTableWord"));
+        FetchData(words, DATA_TABLE_WORD, ["_id", "name", "mean", "groups"], FORM_WORD, "/word");
+    }
+
+    const groups = await GetGroup();
+
+    if (!groups) {
+        FetchData(MOCK_DATA, DATA_TABLE_GROUP, ["_id", "name", "description", "words"], FORM_GROUP, "/group");
+    } else {
+        FetchData(groups, DATA_TABLE_GROUP, ["_id", "name", "description", "words"], FORM_GROUP, "/group");
     }
 }
 
@@ -326,93 +376,159 @@ function HandleError(errors) {
     return resultError;
 }
 
+// function Event_KeyUp(g_changeIntervalKeyup, method) {
+//     const value = this.value;
+//     clearInterval(g_changeIntervalKeyup);
+//     g_changeIntervalKeyup = setInterval(function () {
+//         method();
+//         clearInterval(g_changeIntervalKeyup);
+//     }, 1000);
+// } 
+
+async function Submit() {
+    let request = SerializeForm(this);
+
+    for (let key in request) {
+        request[key] = request[key] || "";
+    }
+
+    const url = this.action;
+    const method = "POST";
+
+    const response = await fetch(url, {
+        method: method,
+        body: JSON.stringify(request),
+        headers: new Headers({
+            'Content-Type': 'application/json'
+        })
+    });
+
+    const data =  await response.json();
+    return data;
+}
+
+
+
 (function () {
 
-    const LIST_ELEMENT = document.getElementById("list-word");
+   
     /*
     * Init function 
     */
     Init();
 
-    // document.getElementById("submitFrm").addEventListener("click", function () {
-    //     const li = CreateElement("LI", "test create element");
-    //     LIST_ELEMENT.appendChild(li);
-    // });
 
+    /**
+     * WORD SECTION
+     */
     document.getElementById("frm-word").addEventListener("submit", async function (e) {
         e.preventDefault();
-
-        let request = SerializeForm(this);
-
-        request.mean = request.mean || "";
-
-        const url = this.action;
-        const method = "POST";
-
-        const response = await fetch(url, {
-            method: method,
-            body: JSON.stringify(request),
-            headers: new Headers({
-                'Content-Type': 'application/json'
-            })
-        });
-
-        const data = await response.json();
+        
+        const submitfnc = Submit.bind(this);
+        const data = await submitfnc();
+    
         const error = HandleError(data.error);
-        //const error = data.error;
         if (error.length > 0) {
-            alert(`Some words can't insert: ${error.join(", ")}`)
+            alert(`Some element name can't insert: ${error.join(", ")}`)
         }
         if (data.saved.length > 0) {
             const dataWords = await GetWord();
-            FetchData(dataWords, document.getElementById("dataTableWord"));
+            FetchData(dataWords, DATA_TABLE_WORD, ["_id", "name", "mean", "groups"]);
         }
     }, false);
 
-    document.getElementById("button-update-word").addEventListener("click", async function (e) {
-        await Update(SerializeForm(document.getElementById("frm-word")), "/word");
+    FORM_WORD[BUTTON_NAME_UPDATE].addEventListener("click", async function (e) {
+        await Update(SerializeForm(FORM_WORD), "/word");
     });
 
-    document.getElementById("button-cancel-word").addEventListener("click", function (e) {
-        Cancel(document.getElementById("frm-word"));
+    FORM_WORD[BUTTON_NAME_CANCEL].addEventListener("click", function (e) {
+        const form = FORM_WORD;
+        Cancel(form);
     });
 
 
-    // Run fill list after 1s keyup text input
-    let _changeIntervalKeyup = null;
+    //Run fill list after 1s keyup text input
+
     document.getElementById("textname").addEventListener("keyup", function () {
-        const value = this.value;
-        clearInterval(_changeIntervalKeyup);
-        _changeIntervalKeyup = setInterval(function () {
-            FillList(value, LIST_ELEMENT);
-            clearInterval(_changeIntervalKeyup);
-        }, 1000);
-    });
+        const name = this.value.split(",").map(d => d.trim());
+        const mean = document.getElementById("textmean").value.split(",").map(d => d.trim());
 
-    let _changeIntervalKeyupMean = null;
+        FillList(LIST_ELEMENT_WORD, name, mean);
+    }, false);
+
     document.getElementById("textmean").addEventListener("keyup", function () {
-        const value = document.getElementById("textname").value;
-        clearInterval(_changeIntervalKeyupMean);
-        _changeIntervalKeyupMean = setInterval(function () {
-            FillList(value, LIST_ELEMENT);
-            clearInterval(_changeIntervalKeyupMean);
-        }, 1000);
-    });
+        const mean = this.value.split(",").map(d => d.trim());
+        const name = document.getElementById("textname").value.split(",").map(d => d.trim());
+
+        FillList(LIST_ELEMENT_WORD, name, mean);
+    }, false);
 
     //search-box-word
 
-    document.getElementById("search-box-word").addEventListener("change", function () {
+    SEARCH_WORD.addEventListener("change", function () {
         const value = this.value;
         SearchDataTable(value, document.getElementById("dataTableWord"));
     });
 
-    let _changeIntervalKeyupSearchBoxWord = null;
-    document.getElementById("search-box-word").addEventListener("keyup", function () {
-        const value = this.value;
-        clearInterval(_changeIntervalKeyupSearchBoxWord);
-        _changeIntervalKeyupSearchBoxWord = setInterval(function () {
-            SearchDataTable(value, document.getElementById("dataTableWord"));
-            clearInterval(_changeIntervalKeyupSearchBoxWord);
-        }, 1000);
+    SEARCH_WORD.addEventListener("keyup", function () {
+        SearchDataTable(this.value, DATA_TABLE_WORD);
+    }, false);
+
+    /**
+     * GROUP SECTION
+     */
+    FORM_GROUP.addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const submitfnc = Submit.bind(this);
+        const data = await submitfnc();
+
+        const error = HandleError(data.error);
+        if (error.length > 0) {
+            alert(`Some element name can't insert: ${error.join(", ")}`)
+        }
+        if (data.saved.length > 0) {
+            const dataGroups = await GetGroup();
+            FetchData(dataGroups, DATA_TABLE_GROUP, ["_id", "name", "description", "words"]);
+        }
+    }, false);
+
+    FORM_GROUP[BUTTON_NAME_UPDATE].addEventListener("click", async function (e) {
+        await Update(SerializeForm(FORM_GROUP), "/group");
     });
+
+    FORM_GROUP[BUTTON_NAME_CANCEL].addEventListener("click", function (e) {
+        const form = FORM_GROUP;
+        Cancel(form);
+    });
+
+
+    //Run fill list after 1s keyup text input
+
+    document.getElementById("textgroupname").addEventListener("keyup", function () {
+        const name = this.value.split(",").map(d => d.trim());
+        const description = document.getElementById("textgroupdescription").value.split(",").map(d => d.trim());
+
+        FillList(LIST_ELEMENT_GROUP, name, description);
+    }, false);
+
+    document.getElementById("textgroupdescription").addEventListener("keyup", function () {
+        const description = this.value.split(",").map(d => d.trim());
+        const name = document.getElementById("textgroupname").value.split(",").map(d => d.trim());
+
+        FillList(LIST_ELEMENT_GROUP, name, description);
+    }, false);
+
+    //search-box-word
+
+    SEARCH_GROUP.addEventListener("change", function () {
+        const value = this.value;
+        SearchDataTable(value, DATA_TABLE_GROUP);
+    });
+
+    SEARCH_GROUP.addEventListener("keyup", function () {
+        SearchDataTable(this.value, DATA_TABLE_GROUP);
+    }, false);
+
 })();
+
