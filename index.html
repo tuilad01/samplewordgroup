@@ -26,8 +26,10 @@
             <input id="textmean" name="mean" placeholder="mean" value="">
             <input id="textgroups" name="groups" placeholder="group id" value="">
             <button id="button-submit-word" name="submit" type="submit" value="create">Add new</button>
-            <button id="button-update-word" name="update" class="button-update" type="button" value="update">Update</button>
-            <button id="button-cancel-word" name="cancel" class="button-cancel" type="button" value="cancel">Cancel</button>
+            <button id="button-update-word" name="update" class="button-update" type="button"
+                value="update">Update</button>
+            <button id="button-cancel-word" name="cancel" class="button-cancel" type="button"
+                value="cancel">Cancel</button>
         </form>
     </section>
 
@@ -35,10 +37,22 @@
 
     <section>
         <hr>
+        <div class="section-search">
+            <form id="frm-word-search" action="/word/search" method="POST">
+                <input name="wordname" placeholder="word name...">
+                <input name="groupname" placeholder="group name...">
+                <input name="date" type="date">
+                <button>Search</button>
+            </form>
+
+            <p class="key-search">search with "asdflsdjflkadf"</p>
+        </div>
+        <hr>
         <div>
             <input id="search-box-word" type="text" placeholder="search...">
         </div>
-
+        <button class="check-all">Check all</button>
+        <button class="delete-all" data-url="/word">Delete All</button>
         <ul id="dataTableWord"></ul>
         <hr>
     </section>
@@ -55,12 +69,14 @@
             <input id="textgroupdescription" name="description" placeholder="description">
             <input id="textwords" name="words" placeholder="word id" value="">
             <button id="button-submit-group" name="submit" type="submit" value="create">Add new</button>
-            <button id="button-update-group" name="update" class="button-update" type="button" value="update">Update</button>
-            <button id="button-cancel-group" name="cancel" class="button-cancel" type="button" value="cancel">Cancel</button>
+            <button id="button-update-group" name="update" class="button-update" type="button"
+                value="update">Update</button>
+            <button id="button-cancel-group" name="cancel" class="button-cancel" type="button"
+                value="cancel">Cancel</button>
         </form>
     </section>
 
-    
+
 
     <section>
         <hr>
@@ -68,6 +84,8 @@
             <input id="search-box-group" type="text" placeholder="search...">
         </div>
 
+        <button class="check-all">Check all</button>
+        <button class="delete-all" data-url="/group">Delete All</button>
         <ul id="dataTableGroup"></ul>
         <hr>
     </section>

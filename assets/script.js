@@ -4,6 +4,9 @@ BUTTON_NAME_SUBMIT = "submit",
 BUTTON_NAME_UPDATE = "update",
 BUTTON_NAME_CANCEL = "cancel";
 
+const CHECK_ALL = document.getElementsByClassName("check-all"),
+        DELETE_ALL = document.getElementsByClassName("delete-all");
+
 // Word
 const FORM_WORD = document.getElementById("frm-word"),
 DATA_TABLE_WORD = document.getElementById("dataTableWord"),
@@ -83,8 +86,10 @@ async function Update(request, url) {
 }
 
 async function Delete(id, url, message) {
-    const result = confirm(message);
-    if (!result) return;
+    if ( message ) {
+        const result = confirm(message);
+        if (!result) return;
+    }
 
     try {
         const response = await fetch(url, {
@@ -97,15 +102,36 @@ async function Delete(id, url, message) {
         const data = await response.json();
 
         if (data.error.length > 0) {
-            alert(data.error[0]);
+            if ( message ) {
+                alert(data.error[0]);
+            }
         } else {
             RemoveElement(id);
         }
 
     } catch (error) {
-        alert(error);
+        if ( message ) {
+            alert(error);
+        }
     }
 
+}
+
+async function Search(request, url) {
+    try {
+        const response = await fetch(url, {
+            method: "POST",
+            body: JSON.stringify(request),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+        FetchData(data, LIST_ELEMENT_WORD, ["_id", "name", "mean", "groups"], FORM_WORD, "/word")
+    } catch (error) {
+        alert(error);
+    }
 }
 
 function FormUpdate(id, frm, model) {
@@ -220,13 +246,18 @@ function SerializeForm(form) {
     return obj;
 }
 
-function CreateElement(elementName, text) {
+function CreateElement(elementName, text, type) {
     // Create a <button> element
     let element = document.createElement(elementName);
     // Create a text node
     const t = document.createTextNode(text);
-    element.appendChild(t);
     // Append the text to <Element>
+    element.appendChild(t);
+    
+    if ( type ) {
+        element.setAttribute("type", type);
+    }
+
     return element;
 }
 /**
@@ -253,7 +284,7 @@ function FillList() {
         let text = arrText[i];
 
         if (!text) continue;
-        const li = CreateElement("LI", text);
+        const li = CreateElement("LI", text, null);
         listElement.appendChild(li);
     }
 }
@@ -264,7 +295,7 @@ function FetchData(data, listElement, model, frm, url) {
 
     for (let i = 0; i < data.length; i++) {
         const record = data[i];
-        const li = CreateElement("LI", "");
+        const li = CreateElement("LI", "", null);
 
         for (let j = 0; j < model.length; j++) {
             const name = model[j] === "_id" ? "id" : model[j];
@@ -274,25 +305,28 @@ function FetchData(data, listElement, model, frm, url) {
             li.setAttribute(key, value);
         }
 
+        const check = CreateElement("input", "", "checkbox");
 
-        const span = CreateElement("SPAN", `${record.name} - ${record.mean || record.description}`);
+        const span = CreateElement("SPAN", `${record.name} - ${record.mean || record.description}`, null);
 
-        let copy = CreateElement("I", "copy");
+        let copy = CreateElement("I", "copy", null);
         copy.setAttribute("class", "copy");
         copy.addEventListener("click", copyToClipboard.bind(null, record._id), false);
         // copy.onclick = copyToClipboard(record._id);
 
-        let update = CreateElement("I", "update");
+        let update = CreateElement("I", "update", null);
         update.setAttribute("class", "update");
         const arrModel = model.filter(d => d !== "_id");
         update.addEventListener("click", FormUpdate.bind(null, record._id, frm, arrModel), false);
         // update.onclick = FormUpdate(record._id, FORM_WORD, arrModel);
 
-        let delte = CreateElement("I", "delete");
+        let delte = CreateElement("I", "delete", null);
         delte.setAttribute("class", "delete");
         delte.addEventListener("click", Delete.bind(null, record._id, url, "Do you want delete this record?"), false);
         // delte.onclick = Delete(record._id, '/word', "Do you want delete this word?");
 
+        // checkbox for li
+        li.appendChild(check);
 
         // text for li in span
         li.appendChild(span);
@@ -530,5 +564,46 @@ async function Submit() {
         SearchDataTable(this.value, DATA_TABLE_GROUP);
     }, false);
 
+    for (let i = 0; i < CHECK_ALL.length; i++) {
+        const element = CHECK_ALL[i];
+        element.addEventListener("click", function () {
+            const parent = this.parentNode;
+            
+            const checkboxes = parent.querySelectorAll("input[type=checkbox]");
+
+            for (let j = 0; j < checkboxes.length; j++) {
+                const checkbox = checkboxes[j];
+                const checked = checkbox.getAttribute("checked");
+                if ( checked ) {
+                    checkbox.removeAttribute("checked");
+                } else {
+                    checkbox.setAttribute("checked", "checked");
+                }
+            }
+        });
+    }
+
+
+    for (let i = 0; i < DELETE_ALL.length; i++) {
+        const element = DELETE_ALL[i];
+        element.addEventListener("click", function () {
+            const parent = this.parentNode;            
+            const checkboxes = parent.querySelectorAll("input[type=checkbox]");
+            const url = this.getAttribute("data-url");
+
+            for (let j = 0; j < checkboxes.length; j++) {
+                const checkbox = checkboxes[j];
+                const checked = checkbox.getAttribute("checked");
+                if ( checked ) {
+                    const li = checkbox.parentNode;
+                    const id = li.getAttribute("id");                            
+
+                    Delete(id, url, "");
+                }
+            }
+        });
+    }
+
+    
 })();
 
