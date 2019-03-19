@@ -1,7 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
-
+const PORT = process.env.PORT || 4200;
 /**
  * Route
  */
@@ -44,6 +44,6 @@ app.get("/", (req, res, next) => {
     res.sendFile(__dirname + "/index.html");
 });
 
-app.listen(4200, () => {
-    console.log("express running on http://localhost:4200/")
+app.listen(PORT, () => {
+    console.log(`express running on http://localhost:${PORT}/`)
 });
