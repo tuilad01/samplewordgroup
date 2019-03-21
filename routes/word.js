@@ -20,46 +20,70 @@ const groupModel = require("./../models/group");
 router.get('/', async (req, res, next) => {
     let wordName = req.query.name ? req.query.name.trim() : "",
         groupName = req.query.groupname ? req.query.groupname.trim() : "",
+        page = req.query.page ? parseInt(req.query.page) : 0,
+        limit = req.query.limit ? parseInt(req.query.limit) : 100,
         fromDate = "",
         toDate = "",
         search = {};
 
     // Form Date
-    if ( req.query.fromdate ) {
+    if (req.query.fromdate) {
         let temp = req.query.fromdate.split("/");
-        if (temp.length === 3 ) { 
+        if (temp.length === 3) {
             fromDate = new Date(temp[2], temp[0] - 1, temp[1]); // YYYY-MM-DD
             console.log(fromDate);
-        } 
+        }
     }
 
     // To Date
-    if ( req.query.todate ) {
+    if (req.query.todate) {
         let temp = req.query.todate.split("/");
-        if (temp.length === 3 ) { 
+        if (temp.length === 3) {
             toDate = new Date(temp[2], temp[0] - 1, temp[1]); // YYYY-MM-DD
             console.log(toDate);
-        } 
+        }
     }
 
     // Property createdat search query add from date and to date 
-    if ( fromDate && toDate 
-        && fromDate instanceof Date 
-        && toDate instanceof Date ) {
-            search.createdAt = { "$gte": fromDate, "$lt": toDate };
+    if (fromDate && toDate
+        && fromDate instanceof Date
+        && toDate instanceof Date) {
+        search.createdAt = { $gte: fromDate, $lt: toDate };
     }
 
     // Search query Name 
-    if ( wordName ) {
-        search.name = { "$regex": wordName, "$options": "i" };
+    if (wordName) {
+        search.name = { $regex: wordName, $options: "i" };
     }
 
-    // if ( groupName ) {        
-    // }
+    if (groupName) {
+        search.groups = { name: groupName };
+    }
 
     try {
-        const words = await wordModel.find(search).populate("groups");;
-        return res.json(words);
+        const words = await wordModel.aggregate([
+            // {
+            //     $unwind: "$specs"
+            // },
+            {
+                $lookup: {
+                    from: "groups",
+                    localField: "groups",
+                    foreignField: "_id",
+                    as: "groups"
+                }
+            },
+            {
+                $match: search // search
+            },
+            {
+                $skip: page * limit // pagination skip
+            }, {
+                $limit: limit // pagination limit
+            }
+        ]);
+
+        res.json(words);
     } catch (error) {
         next(error);
     }

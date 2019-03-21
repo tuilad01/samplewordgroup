@@ -176,7 +176,7 @@ function Cancel(form) {
         form.elements[i].value = "";
     }
 
-    ControlButton(frm,
+    ControlButton(form,
         [
             { name: BUTTON_NAME_SUBMIT, display: "inline-block" },
             { name: BUTTON_NAME_CANCEL, display: "none" },
@@ -441,8 +441,6 @@ async function Submit() {
     return data;
 }
 
-
-
 (function () {
 
    
@@ -462,9 +460,16 @@ async function Submit() {
         const data = await submitfnc();
     
         const error = HandleError(data.error);
-        if (error.length > 0) {
-            alert(`Some element name can't insert: ${error.join(", ")}`)
+        if (error.length > 0) {            
+            const rsConfirm = confirm(`Some element name can't insert: ${error.join(", ")}`);
+            
+            if ( rsConfirm ) {
+                Cancel(this);
+            }            
+        } else {
+            Cancel(this);
         }
+
         if (data.saved.length > 0) {
             const dataWords = await GetWord();
             FetchData(dataWords, DATA_TABLE_WORD, ["_id", "name", "mean", "groups"]);
@@ -480,17 +485,30 @@ async function Submit() {
         Cancel(form);
     });
 
-
-    //Run fill list after 1s keyup text input
-
+    //Run fill list after 1s keyup text input   
     document.getElementById("textname").addEventListener("keyup", function () {
         const name = this.value.split(",").map(d => d.trim());
         const mean = document.getElementById("textmean").value.split(",").map(d => d.trim());
+    
+        FillList(LIST_ELEMENT_WORD, name, mean);
+    }, false);
+
+    document.getElementById("textname").addEventListener("paste", function () {
+        const name = this.value.split(",").map(d => d.trim());
+        const mean = document.getElementById("textmean").value.split(",").map(d => d.trim());
+    
+        FillList(LIST_ELEMENT_WORD, name, mean);
+    }, false);
+ 
+
+    document.getElementById("textmean").addEventListener("keyup", function () {
+        const mean = this.value.split(",").map(d => d.trim());
+        const name = document.getElementById("textname").value.split(",").map(d => d.trim());
 
         FillList(LIST_ELEMENT_WORD, name, mean);
     }, false);
 
-    document.getElementById("textmean").addEventListener("keyup", function () {
+    document.getElementById("textmean").addEventListener("paste", function () {
         const mean = this.value.split(",").map(d => d.trim());
         const name = document.getElementById("textname").value.split(",").map(d => d.trim());
 
@@ -519,7 +537,13 @@ async function Submit() {
 
         const error = HandleError(data.error);
         if (error.length > 0) {
-            alert(`Some element name can't insert: ${error.join(", ")}`)
+            const rsConfirm = confirm(`Some element name can't insert: ${error.join(", ")}`);
+            
+            if ( rsConfirm ) {
+                Cancel(this);
+            }            
+        } else {
+            Cancel(this);
         }
         if (data.saved.length > 0) {
             const dataGroups = await GetGroup();
