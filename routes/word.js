@@ -26,21 +26,25 @@ router.get('/', async (req, res, next) => {
         toDate = "",
         search = {};
 
+    if (limit > 100) {
+        limit = 100;
+    }
+
     // Form Date
     if (req.query.fromdate) {
-        let temp = req.query.fromdate.split("/");
+        let temp = req.query.fromdate.split("-");
         if (temp.length === 3) {
-            fromDate = new Date(temp[2], temp[0] - 1, temp[1]); // YYYY-MM-DD
-            console.log(fromDate);
+            fromDate = new Date(temp[0], temp[1] - 1, temp[2]); // YYYY-MM-DD
+            //console.log(fromDate);
         }
     }
 
     // To Date
     if (req.query.todate) {
-        let temp = req.query.todate.split("/");
+        let temp = req.query.todate.split("-");
         if (temp.length === 3) {
-            toDate = new Date(temp[2], temp[0] - 1, temp[1]); // YYYY-MM-DD
-            console.log(toDate);
+            toDate = new Date(temp[0], temp[1] - 1, temp[2]); // YYYY-MM-DD
+            //console.log(toDate);
         }
     }
 
@@ -57,13 +61,13 @@ router.get('/', async (req, res, next) => {
     }
 
     if (groupName) {
-        search.groups = { name: groupName };
+        search["groups.name"] = { $regex: groupName, $options: "i" };
     }
 
     try {
         const words = await wordModel.aggregate([
             // {
-            //     $unwind: "$specs"
+            //     $unwind: "$groups"
             // },
             {
                 $lookup: {
@@ -83,6 +87,7 @@ router.get('/', async (req, res, next) => {
             }
         ]);
 
+        //console.log(words);
         res.json(words);
     } catch (error) {
         next(error);
@@ -125,6 +130,14 @@ router.post('/', async (req, res, next) => {
         try {
             const response = await wordNew.save();
             wordSaved.push(response);
+
+            for (let i = 0; i < groups.length; i++) {
+                const group = groups[i];
+
+                await groupModel.findByIdAndUpdate({ _id: group }, { $push: { words: response._id } });
+                //console.log(resGroup);
+            }
+
         } catch (error) {
             console.error(error);
             arrError.push(error.message);
@@ -137,10 +150,64 @@ router.post('/', async (req, res, next) => {
 
 });
 
+router.put("/linkgroup", async (req, res, next) => {
+    let arrError = [],
+        groupSaved = [];
+
+    const id = req.body._id;
+    const arrWord = req.body.words;
+
+    if (!id || !arrWord || !(arrWord instanceof Array)) {
+        return res.json({
+            error: ["request error"],
+            saved: groupSaved
+        });
+    }
+
+    const group = await groupModel.findById(id).populate("words");
+
+    if (!group) {
+        return res.json({
+            error: ["group _id not found"],
+            saved: groupSaved
+        });
+    }
+    try {
+        let temp = [...group.words.map(d => d.id)];
+        temp = temp.concat(arrWord);
+
+        // Distinct
+        temp = temp.filter((value, index, self) => {
+            return self.indexOf(value) === index;
+        });
+
+        group.words = temp;
+
+        // const response = await groupModel.update([
+        //     { _id: id },
+        //     { $push: { "words" :  arrWord }}
+        // ]);
+
+        const response = await group.save();
+        groupSaved.push(response);
+    } catch (error) {
+        console.error(error);
+        arrError.push(error.message);
+    }
+
+    return res.json({
+        error: arrError,
+        saved: groupSaved
+    });
+});
+
 router.put("/", async (req, res, next) => {
     const id = req.body._id;
     if (!id) {
-        return res.send({ error: "request error" });
+        return res.json({
+            error: ["request error"],
+            saved: wordSaved
+        });
     }
 
     const groups = req.body.groups.trim() === "" ? [] : req.body.groups.split(",").map(d => d.trim());
@@ -153,9 +220,34 @@ router.put("/", async (req, res, next) => {
 
     const word = await wordModel.findById(id);
     if (!word) {
-        return res.send({ error: "word _id not found" });
+        return res.json({
+            error: ["word _id not found"],
+            saved: wordSaved
+        });
     }
     try {
+        // TODO: Find all groups id not working
+
+        const groupsOld = [...word.groups.map(d => d.id)];
+        const groupNotUse = groupsOld.filter(d => {
+            return groups.indexOf(d) === -1;
+        });
+
+        for (let i = 0; i < groupNotUse.length; i++) {
+            const groupId = groupNotUse[i];
+
+            await groupModel.findByIdAndUpdate({ _id: groupId }, { $pull: { words: response._id } }, { multi: true });
+        }
+
+
+        // for (let i = 0; i < word.groups.length; i++) {
+        //     const group = word.groups[i];
+        //     if ( !group ) continue;
+
+
+
+        // }
+
         word.name = name;
         word.mean = mean;
         word.groups = groups;
@@ -174,15 +266,23 @@ router.put("/", async (req, res, next) => {
 
 });
 
+
+
 router.delete("/", async (req, res, next) => {
     const id = req.body._id;
-    if (!id) return res.send({ error: "request error" });
+    if (!id) return res.json({
+        error: ["request error"],
+        saved: wordSaved
+    });
 
     let arrError = [];
     let wordSaved = [];
 
     const word = await wordModel.findById(id);
-    if (!word) return res.send({ error: "word _id not found" });
+    if (!word) return res.json({
+        error: ["word _id not found"],
+        saved: wordSaved
+    });
 
     try {
         const response = await word.remove();

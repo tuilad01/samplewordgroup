@@ -1,7 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
-const PORT = process.env.PORT || 4200;
+const PORT = process.env.PORT || 4000;
 /**
  * Route
  */
@@ -37,11 +37,17 @@ app.use(express.static('assets'));
 //     res.status(500).json({ error: err.message });
 // });
 
+app.use(function (req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
+});
+
 app.use('/word', wordRoute);
 app.use('/group', groupRoute);
 
 
-app.get("/", (req, res, next) => {    
+app.get("/", (req, res, next) => {
     res.sendFile(__dirname + "/index.html");
 });
 

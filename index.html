@@ -31,6 +31,11 @@
             <button id="button-cancel-word" name="cancel" class="button-cancel" type="button"
                 value="cancel">Cancel</button>
         </form>
+        <hr>
+        <form id="frm-link-group" action="/word/linkgroup" method="PUT">
+            <input type="text" id="linkgroup" name="_id" placeholder="link group id" required>
+            <button type="submit">Link</button>
+        </form>
     </section>
 
 
@@ -38,11 +43,13 @@
     <section>
         <hr>
         <div class="section-search">
-            <form id="frm-word-search" action="/word/search" method="POST">
-                <input name="wordname" placeholder="word name...">
+            <form id="frm-word-search" action="/word" method="GET">
+                <input name="name" placeholder="word name...">
                 <input name="groupname" placeholder="group name...">
-                <input name="date" type="date">
-                <button>Search</button>
+                <br>
+                Date form: <input name="fromdate" type="date" data-date="today">
+                Date to: <input name="todate" type="date" data-date="tomorrow">
+                <button type="submit">Search</button>
             </form>
 
             <p class="key-search">search with "asdflsdjflkadf"</p>
@@ -51,8 +58,10 @@
         <div>
             <input id="search-box-word" type="text" placeholder="search...">
         </div>
+
         <button class="check-all">Check all</button>
-        <button class="delete-all" data-url="/word">Delete All</button>
+        <button class="delete-all" data-url="/word">Delete All</button>        
+
         <ul id="dataTableWord"></ul>
         <hr>
     </section>

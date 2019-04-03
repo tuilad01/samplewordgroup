@@ -1,24 +1,24 @@
 
 const MOCK_DATA = [],
-BUTTON_NAME_SUBMIT = "submit",
-BUTTON_NAME_UPDATE = "update",
-BUTTON_NAME_CANCEL = "cancel";
+    BUTTON_NAME_SUBMIT = "submit",
+    BUTTON_NAME_UPDATE = "update",
+    BUTTON_NAME_CANCEL = "cancel";
 
 const CHECK_ALL = document.getElementsByClassName("check-all"),
-        DELETE_ALL = document.getElementsByClassName("delete-all");
+    DELETE_ALL = document.getElementsByClassName("delete-all");
 
 // Word
 const FORM_WORD = document.getElementById("frm-word"),
-DATA_TABLE_WORD = document.getElementById("dataTableWord"),
-LIST_ELEMENT_WORD = document.getElementById("list-word"),
-SEARCH_WORD = document.getElementById("search-box-word");
+    DATA_TABLE_WORD = document.getElementById("dataTableWord"),
+    LIST_ELEMENT_WORD = document.getElementById("list-word"),
+    SEARCH_WORD = document.getElementById("search-box-word");
 
 
 // Group
 const DATA_TABLE_GROUP = document.getElementById("dataTableGroup"),
-FORM_GROUP = document.getElementById("frm-group"),
-LIST_ELEMENT_GROUP = document.getElementById("list-group"),
-SEARCH_GROUP = document.getElementById("search-box-group");
+    FORM_GROUP = document.getElementById("frm-group"),
+    LIST_ELEMENT_GROUP = document.getElementById("list-group"),
+    SEARCH_GROUP = document.getElementById("search-box-group");
 
 let WORD_ID = "";
 let GROUP_ID = "";
@@ -85,8 +85,8 @@ async function Update(request, url) {
     }
 }
 
-async function Delete(id, url, message) {
-    if ( message ) {
+async function Delete(id, url, message, form = null) {
+    if (message) {
         const result = confirm(message);
         if (!result) return;
     }
@@ -102,15 +102,19 @@ async function Delete(id, url, message) {
         const data = await response.json();
 
         if (data.error.length > 0) {
-            if ( message ) {
+            if (message) {
                 alert(data.error[0]);
             }
         } else {
             RemoveElement(id);
+            if (form) {
+                Cancel(form);
+            }
+
         }
 
     } catch (error) {
-        if ( message ) {
+        if (message) {
             alert(error);
         }
     }
@@ -200,6 +204,7 @@ function SerializeForm(form) {
                     case 'hidden':
                     case 'password':
                     case 'button':
+                    case 'date':
                     case 'reset':
                     case 'submit':
                         //obj[form.elements[i].name] = encodeURIComponent(form.elements[i].value);
@@ -246,15 +251,15 @@ function SerializeForm(form) {
     return obj;
 }
 
-function CreateElement(elementName, text, type) {
+function CreateElement(elementName, text, type = null) {
     // Create a <button> element
     let element = document.createElement(elementName);
     // Create a text node
     const t = document.createTextNode(text);
     // Append the text to <Element>
     element.appendChild(t);
-    
-    if ( type ) {
+
+    if (type) {
         element.setAttribute("type", type);
     }
 
@@ -284,7 +289,7 @@ function FillList() {
         let text = arrText[i];
 
         if (!text) continue;
-        const li = CreateElement("LI", text, null);
+        const li = CreateElement("LI", text);
         listElement.appendChild(li);
     }
 }
@@ -294,36 +299,48 @@ function FetchData(data, listElement, model, frm, url) {
     listElement.innerHTML = "";
 
     for (let i = 0; i < data.length; i++) {
+        let arrayField = [];
+
         const record = data[i];
-        const li = CreateElement("LI", "", null);
+        const li = CreateElement("LI", "");
 
         for (let j = 0; j < model.length; j++) {
             const name = model[j] === "_id" ? "id" : model[j];
             const key = name === "id" ? name : `data-${name}`;
-            const value = record[name] instanceof Array ? record[name].join(",") : record[name === "id" ? "_id" : name];
+
+            let value;
+
+            if (record[name] instanceof Array) {
+                value = record[name].map(d => d._id).join(",");
+                arrayField = record[name].map(d => d.name);
+            } else {
+                value = record[name === "id" ? "_id" : name];
+            }
+
+
 
             li.setAttribute(key, value);
         }
 
         const check = CreateElement("input", "", "checkbox");
 
-        const span = CreateElement("SPAN", `${record.name} - ${record.mean || record.description}`, null);
+        const span = CreateElement("SPAN", `${record.name} - ${record.mean || record.description}`);
 
-        let copy = CreateElement("I", "copy", null);
+        let copy = CreateElement("I", "copy");
         copy.setAttribute("class", "copy");
         copy.addEventListener("click", copyToClipboard.bind(null, record._id), false);
-        // copy.onclick = copyToClipboard(record._id);
 
-        let update = CreateElement("I", "update", null);
+
+        let update = CreateElement("I", "update");
         update.setAttribute("class", "update");
         const arrModel = model.filter(d => d !== "_id");
         update.addEventListener("click", FormUpdate.bind(null, record._id, frm, arrModel), false);
-        // update.onclick = FormUpdate(record._id, FORM_WORD, arrModel);
 
-        let delte = CreateElement("I", "delete", null);
+
+        let delte = CreateElement("I", "delete");
         delte.setAttribute("class", "delete");
-        delte.addEventListener("click", Delete.bind(null, record._id, url, "Do you want delete this record?"), false);
-        // delte.onclick = Delete(record._id, '/word', "Do you want delete this word?");
+        delte.addEventListener("click", Delete.bind(null, record._id, url, "Do you want delete this record?", frm), false);
+
 
         // checkbox for li
         li.appendChild(check);
@@ -339,6 +356,20 @@ function FetchData(data, listElement, model, frm, url) {
 
         // Add delete function in record
         li.appendChild(delte);
+
+        // for array field in data
+        if (arrayField.length > 0) {
+            const ul = CreateElement("UL", "");
+
+            for (let j = 0; j < arrayField.length; j++) {
+                const arrayFieldName = arrayField[j];
+
+                const li = CreateElement("LI", arrayFieldName);
+                ul.appendChild(li);
+            }
+
+            li.appendChild(ul);
+        }
 
 
         // Add record to list
@@ -363,10 +394,22 @@ function SearchDataTable(query, dataTable) {
     }
 }
 
-async function GetWord() {
-    const response = await fetch("/word", {
-        method: "GET",
-    });
+async function GetWord(request = null) {
+    const init = {
+        method: "GET"
+    };
+    let url = "/word";
+
+    if (request) {
+        url += "?";
+        let arrParam = [];
+        for (let key in request) {
+            arrParam.push(`${key}=${request[key]}`);
+        }
+        url += arrParam.join("&");
+    }
+    const response = await fetch(url, init);
+
     const data = await response.json();
     return data;
 }
@@ -379,7 +422,100 @@ async function GetGroup() {
     return data;
 }
 
+function DefaultDateInput() {
+    const inputDate = document.querySelectorAll("input[type='date']");
+    if (inputDate && inputDate.length && inputDate.length > 0) {
+        for (let i = 0; i < inputDate.length; i++) {
+            const input = inputDate[i];
+            const dataDate = input.getAttribute("data-date");
+
+            const now = new Date();
+            const month = ("0" + (now.getMonth() + 1)).slice(-2);
+
+            const today = `${now.getFullYear()}-${month}-${now.getDate()}`;
+            const tomorrow = `${now.getFullYear()}-${month}-${now.getDate() + 1}`;
+
+            switch (dataDate) {
+                case "today":
+                    input.value = today;
+                    break;
+                case "tomorrow":
+                    input.value = tomorrow;
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+}
+
+function EventSubmit_FormWordSearch() {
+    document.getElementById("frm-word-search").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const request = SerializeForm(this);
+        const data = await GetWord(request);
+        FetchData(data, DATA_TABLE_WORD, ["_id", "name", "mean", "groups"], FORM_WORD, "/word");
+    }, false);
+}
+
+function EventSubmit_FormLinkGroup() {
+    document.getElementById("frm-link-group").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const url = "/word/linkgroup";
+        const dataRequest = SerializeForm(this);
+        dataRequest.words = [];
+        
+        const checkboxes = DATA_TABLE_WORD.querySelectorAll("input[type='checkbox']:checked");     
+
+        if (checkboxes.length <= 0) {
+            alert("Please check any element!");
+            return false;
+        }
+
+        for (let j = 0; j < checkboxes.length; j++) {
+            const checkbox = checkboxes[j];
+            const li = checkbox.parentNode;
+            const id = li.getAttribute("id");
+
+            dataRequest.words.push(id);
+        }
+
+        try {
+            const response = await fetch(url, {
+                method: "PUT",
+                body: JSON.stringify(dataRequest),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+    
+            const data = await response.json();
+            if (data.error.length > 0) {
+                alert(data.error[0]);
+            } 
+            
+             const searchForm = document.getElementById("frm-word-search");
+             const request = SerializeForm(searchForm);
+             const dataWords = await GetWord(request);
+             FetchData(dataWords, DATA_TABLE_WORD, ["_id", "name", "mean", "groups"], FORM_WORD, "/word");
+        } catch (error) {
+            alert(error);
+        }
+
+    });
+}
+
 async function Init() {
+
+    DefaultDateInput();
+
+    EventSubmit_FormWordSearch();
+
+    EventSubmit_FormLinkGroup();
+
+
     const words = await GetWord();
 
     if (!words) {
@@ -437,13 +573,13 @@ async function Submit() {
         })
     });
 
-    const data =  await response.json();
+    const data = await response.json();
     return data;
 }
 
 (function () {
 
-   
+
     /*
     * Init function 
     */
@@ -455,24 +591,24 @@ async function Submit() {
      */
     document.getElementById("frm-word").addEventListener("submit", async function (e) {
         e.preventDefault();
-        
+
         const submitfnc = Submit.bind(this);
         const data = await submitfnc();
-    
+
         const error = HandleError(data.error);
-        if (error.length > 0) {            
+        if (error.length > 0) {
             const rsConfirm = confirm(`Some element name can't insert: ${error.join(", ")}`);
-            
-            if ( rsConfirm ) {
+
+            if (rsConfirm) {
                 Cancel(this);
-            }            
+            }
         } else {
             Cancel(this);
         }
 
         if (data.saved.length > 0) {
             const dataWords = await GetWord();
-            FetchData(dataWords, DATA_TABLE_WORD, ["_id", "name", "mean", "groups"]);
+            FetchData(dataWords, DATA_TABLE_WORD, ["_id", "name", "mean", "groups"], FORM_WORD, "/word");
         }
     }, false);
 
@@ -489,17 +625,17 @@ async function Submit() {
     document.getElementById("textname").addEventListener("keyup", function () {
         const name = this.value.split(",").map(d => d.trim());
         const mean = document.getElementById("textmean").value.split(",").map(d => d.trim());
-    
+
         FillList(LIST_ELEMENT_WORD, name, mean);
     }, false);
 
     document.getElementById("textname").addEventListener("paste", function () {
         const name = this.value.split(",").map(d => d.trim());
         const mean = document.getElementById("textmean").value.split(",").map(d => d.trim());
-    
+
         FillList(LIST_ELEMENT_WORD, name, mean);
     }, false);
- 
+
 
     document.getElementById("textmean").addEventListener("keyup", function () {
         const mean = this.value.split(",").map(d => d.trim());
@@ -538,16 +674,16 @@ async function Submit() {
         const error = HandleError(data.error);
         if (error.length > 0) {
             const rsConfirm = confirm(`Some element name can't insert: ${error.join(", ")}`);
-            
-            if ( rsConfirm ) {
+
+            if (rsConfirm) {
                 Cancel(this);
-            }            
+            }
         } else {
             Cancel(this);
         }
         if (data.saved.length > 0) {
             const dataGroups = await GetGroup();
-            FetchData(dataGroups, DATA_TABLE_GROUP, ["_id", "name", "description", "words"]);
+            FetchData(dataGroups, DATA_TABLE_GROUP, ["_id", "name", "description", "words"], FORM_GROUP, "/group");
         }
     }, false);
 
@@ -592,17 +728,18 @@ async function Submit() {
         const element = CHECK_ALL[i];
         element.addEventListener("click", function () {
             const parent = this.parentNode;
-            
+
             const checkboxes = parent.querySelectorAll("input[type=checkbox]");
 
-            for (let j = 0; j < checkboxes.length; j++) {
+            const firstCheckbox = checkboxes[0];
+
+            if (!firstCheckbox) return false;
+
+            firstCheckbox.checked = !firstCheckbox.checked;
+
+            for (let j = 1; j < checkboxes.length; j++) {
                 const checkbox = checkboxes[j];
-                const checked = checkbox.getAttribute("checked");
-                if ( checked ) {
-                    checkbox.removeAttribute("checked");
-                } else {
-                    checkbox.setAttribute("checked", "checked");
-                }
+                checkbox.checked = firstCheckbox.checked;
             }
         });
     }
@@ -611,23 +748,29 @@ async function Submit() {
     for (let i = 0; i < DELETE_ALL.length; i++) {
         const element = DELETE_ALL[i];
         element.addEventListener("click", function () {
-            const parent = this.parentNode;            
-            const checkboxes = parent.querySelectorAll("input[type=checkbox]");
+            const parent = this.parentNode;
+            const checkboxes = parent.querySelectorAll("input[type='checkbox']:checked");
             const url = this.getAttribute("data-url");
+
+            if (checkboxes.length <= 0) return false;
+
+            const confirmDetele = confirm("Are you sure?");
+
+            if (!confirmDetele) return false;
 
             for (let j = 0; j < checkboxes.length; j++) {
                 const checkbox = checkboxes[j];
-                const checked = checkbox.getAttribute("checked");
-                if ( checked ) {
-                    const li = checkbox.parentNode;
-                    const id = li.getAttribute("id");                            
+                const li = checkbox.parentNode;
+                const id = li.getAttribute("id");
 
-                    Delete(id, url, "");
-                }
+                Delete(id, url, "");
             }
         });
     }
 
+
     
+
 })();
+
 
