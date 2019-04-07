@@ -172,24 +172,21 @@ router.put("/linkgroup", async (req, res, next) => {
             saved: groupSaved
         });
     }
+
+
     try {
-        let temp = [...group.words.map(d => d.id)];
-        temp = temp.concat(arrWord);
+        for (let i = 0; i < arrWord.length; i++) {
+            const wordId = arrWord[i];
 
-        // Distinct
-        temp = temp.filter((value, index, self) => {
-            return self.indexOf(value) === index;
-        });
+            const res = await wordModel.findOneAndUpdate({ _id: wordId }, { $addToSet: { groups: group._id } });
+            if (!res && !res.id) {
+                continue;
+            }
+            await groupModel.findOneAndUpdate({ _id: group._id }, { $addToSet: { words: wordId } });
 
-        group.words = temp;
+        }
 
-        // const response = await groupModel.update([
-        //     { _id: id },
-        //     { $push: { "words" :  arrWord }}
-        // ]);
-
-        const response = await group.save();
-        groupSaved.push(response);
+        groupSaved.push(group);
     } catch (error) {
         console.error(error);
         arrError.push(error.message);
@@ -203,6 +200,10 @@ router.put("/linkgroup", async (req, res, next) => {
 
 router.put("/", async (req, res, next) => {
     const id = req.body._id;
+
+    let arrError = [];
+    let wordSaved = [];
+    
     if (!id) {
         return res.json({
             error: ["request error"],
@@ -212,13 +213,9 @@ router.put("/", async (req, res, next) => {
 
     const groups = req.body.groups.trim() === "" ? [] : req.body.groups.split(",").map(d => d.trim());
     const name = req.body.name.trim();
-    const mean = req.body.mean.trim();
+    const mean = req.body.mean.trim();  
 
-
-    let arrError = [];
-    let wordSaved = [];
-
-    const word = await wordModel.findById(id);
+    const word = await wordModel.findById(id).populate("groups");
     if (!word) {
         return res.json({
             error: ["word _id not found"],
@@ -233,21 +230,26 @@ router.put("/", async (req, res, next) => {
             return groups.indexOf(d) === -1;
         });
 
+        // Remove word from group when word not yet in group
         for (let i = 0; i < groupNotUse.length; i++) {
             const groupId = groupNotUse[i];
+            if (!groupId) continue;
 
-            await groupModel.findByIdAndUpdate({ _id: groupId }, { $pull: { words: response._id } }, { multi: true });
+            await groupModel.findByIdAndUpdate({ _id: groupId }, { $pull: { words: word._id } }, { multi: true });
         }
 
+        // Add word in group
+        for (let i = 0; i < groups.length; i++) {
+            const group = groups[i];
+            if (!group) continue;
 
-        // for (let i = 0; i < word.groups.length; i++) {
-        //     const group = word.groups[i];
-        //     if ( !group ) continue;
+            //await groupModel.findOneAndUpdate({ _id: group },{ $push: { words: word._id } }, { "words._id": { $ne: word._id } } ); NOT WORKING
+            // the same way above
+            await groupModel.findOneAndUpdate({ _id: group }, { $addToSet: { words: word._id } });
 
+        }
 
-
-        // }
-
+        // Save detail word
         word.name = name;
         word.mean = mean;
         word.groups = groups;
@@ -270,22 +272,25 @@ router.put("/", async (req, res, next) => {
 
 router.delete("/", async (req, res, next) => {
     const id = req.body._id;
+
+    let arrError = [];
+    let wordSaved = [];
+
     if (!id) return res.json({
         error: ["request error"],
         saved: wordSaved
     });
 
-    let arrError = [];
-    let wordSaved = [];
-
-    const word = await wordModel.findById(id);
+    const word = await wordModel.findById(id).populate("groups");
     if (!word) return res.json({
         error: ["word _id not found"],
         saved: wordSaved
     });
 
     try {
-        const response = await word.remove();
+        await groupModel.update({ _id: { $in: word.groups } }, { $pull: { words: word._id } }, { multi: true });
+
+        response = await word.remove();
         wordSaved.push(response);
     } catch (error) {
         console.error(error);
