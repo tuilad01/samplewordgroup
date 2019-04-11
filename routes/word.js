@@ -18,7 +18,8 @@ const groupModel = require("./../models/group");
 
 // define the home page route
 router.get('/', async (req, res, next) => {
-    let wordName = req.query.name ? req.query.name.trim() : "",
+    let id = req.query.id ? req.query.id.trim() : "",
+        wordName = req.query.name ? req.query.name.trim() : "",
         groupName = req.query.groupname ? req.query.groupname.trim() : "",
         page = req.query.page ? parseInt(req.query.page) : 0,
         limit = req.query.limit ? parseInt(req.query.limit) : 100,
@@ -78,7 +79,7 @@ router.get('/', async (req, res, next) => {
                 }
             },
             {
-                $match: search // search
+                $match: { _id: mongoose.Types.ObjectId("5c96e2f9dc1ca21b68269245") } // search
             },
             {
                 $skip: page * limit // pagination skip
@@ -203,7 +204,7 @@ router.put("/", async (req, res, next) => {
 
     let arrError = [];
     let wordSaved = [];
-    
+
     if (!id) {
         return res.json({
             error: ["request error"],
@@ -213,7 +214,7 @@ router.put("/", async (req, res, next) => {
 
     const groups = req.body.groups.trim() === "" ? [] : req.body.groups.split(",").map(d => d.trim());
     const name = req.body.name.trim();
-    const mean = req.body.mean.trim();  
+    const mean = req.body.mean.trim();
 
     const word = await wordModel.findById(id).populate("groups");
     if (!word) {

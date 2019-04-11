@@ -18,80 +18,81 @@ const groupModel = require("./../models/group");
 
 // define the home page route
 router.get('/', async (req, res, next) => {
-    let groupName = req.query.name ? req.query.name.trim() : "",
-    wordName = req.query.wordname ? req.query.wordname.trim() : "",
-    page = req.query.page ? parseInt(req.query.page) : 0,
-    limit = req.query.limit ? parseInt(req.query.limit) : 100,
-    fromDate = "",
-    toDate = "",
-    search = {};
+    let id = req.query.id ? mongoose.Types.ObjectId(req.query.id.trim()) : "",
+        groupName = req.query.name ? req.query.name.trim() : "",
+        wordName = req.query.wordname ? req.query.wordname.trim() : "",
+        page = req.query.page ? parseInt(req.query.page) : 0,
+        limit = req.query.limit ? parseInt(req.query.limit) : 100,
+        fromDate = "",
+        toDate = "",
+        search = {};
 
-if (limit > 100) {
-    limit = 100;
-}
-
-// Form Date
-if (req.query.fromdate) {
-    let temp = req.query.fromdate.split("-");
-    if (temp.length === 3) {
-        fromDate = new Date(temp[0], temp[1] - 1, temp[2]); // YYYY-MM-DD
-        //console.log(fromDate);
+    if (limit > 100) {
+        limit = 100;
     }
-}
 
-// To Date
-if (req.query.todate) {
-    let temp = req.query.todate.split("-");
-    if (temp.length === 3) {
-        toDate = new Date(temp[0], temp[1] - 1, temp[2]); // YYYY-MM-DD
-        //console.log(toDate);
-    }
-}
-
-// Property createdat search query add from date and to date 
-if (fromDate && toDate
-    && fromDate instanceof Date
-    && toDate instanceof Date) {
-    search.createdAt = { $gte: fromDate, $lt: toDate };
-}
-
-// Search query Name 
-if (groupName) {
-    search.name = { $regex: groupName, $options: "i" };
-}
-
-if (wordName) {
-    search["words.name"] = { $regex: wordName, $options: "i" };
-}
-
-try {
-    const groups = await groupModel.aggregate([
-        // {
-        //     $unwind: "$groups"
-        // },
-        {
-            $lookup: {
-                from: "words",
-                localField: "words",
-                foreignField: "_id",
-                as: "words"
-            }
-        },
-        {
-            $match: search // search
-        },
-        {
-            $skip: page * limit // pagination skip
-        }, {
-            $limit: limit // pagination limit
+    // Form Date
+    if (req.query.fromdate) {
+        let temp = req.query.fromdate.split("-");
+        if (temp.length === 3) {
+            fromDate = new Date(temp[0], temp[1] - 1, temp[2]); // YYYY-MM-DD
+            //console.log(fromDate);
         }
-    ]);
+    }
 
-    //console.log(groups);
-    res.json(groups);
-} catch (error) {
-    next(error);
-}
+    // To Date
+    if (req.query.todate) {
+        let temp = req.query.todate.split("-");
+        if (temp.length === 3) {
+            toDate = new Date(temp[0], temp[1] - 1, temp[2]); // YYYY-MM-DD
+            //console.log(toDate);
+        }
+    }
+
+    // Property createdat search query add from date and to date 
+    if (fromDate && toDate
+        && fromDate instanceof Date
+        && toDate instanceof Date) {
+        search.createdAt = { $gte: fromDate, $lt: toDate };
+    }
+
+    // Search query Name 
+    if (groupName) {
+        search.name = { $regex: groupName, $options: "i" };
+    }
+
+    if (wordName) {
+        search["words.name"] = { $regex: wordName, $options: "i" };
+    }
+
+    try {
+        const groups = await groupModel.aggregate([
+            // {
+            //     $unwind: "$groups"
+            // },
+            {
+                $lookup: {
+                    from: "words",
+                    localField: "words",
+                    foreignField: "_id",
+                    as: "words"
+                }
+            },
+            {
+                $match: id ? { _id: id } : search // search
+            },
+            {
+                $skip: page * limit // pagination skip
+            }, {
+                $limit: limit // pagination limit
+            }
+        ]);
+
+        //console.log(groups);
+        res.json(groups);
+    } catch (error) {
+        next(error);
+    }
 });
 
 // define the about route
@@ -282,8 +283,8 @@ router.delete("/", async (req, res, next) => {
     });
 
     try {
-        await groupModel.update({ _id: { $in: group.words }}, { $pull: { words: group._id } }, { multi: true });
-       
+        await groupModel.update({ _id: { $in: group.words } }, { $pull: { words: group._id } }, { multi: true });
+
         response = await group.remove();
         groupSaved.push(response);
     } catch (error) {
