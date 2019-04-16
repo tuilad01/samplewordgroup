@@ -20,8 +20,8 @@ const app = express();
 /**
  * Mongoose connection
  */
-//mongoose.connect('mongodb://admin:dbadmin123@ds151840.mlab.com:51840/dbword93822112018', { useNewUrlParser: true, useCreateIndex: true, });
-mongoose.connect('mongodb://localhost:27017/test', { useNewUrlParser: true, useCreateIndex: true, });
+mongoose.connect('mongodb://admin:dbadmin123@ds151840.mlab.com:51840/dbword93822112018', { useNewUrlParser: true, useCreateIndex: true, });
+//mongoose.connect('mongodb://localhost:27017/test', { useNewUrlParser: true, useCreateIndex: true, });
 
 
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -39,6 +39,7 @@ app.use(express.static('assets'));
 
 app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     next();
 });

@@ -153,7 +153,7 @@ router.put("/linkword", async (req, res, next) => {
         wordSaved = [];
 
     const id = req.body._id;
-    const arrGroup = req.body.words;
+    const arrGroup = req.body.groups;
 
     if (!id || !arrGroup || !(arrGroup instanceof Array)) {
         return res.json({

@@ -18,7 +18,7 @@ const groupModel = require("./../models/group");
 
 // define the home page route
 router.get('/', async (req, res, next) => {
-    let id = req.query.id ? req.query.id.trim() : "",
+    let id = req.query.id ? mongoose.Types.ObjectId(req.query.id.trim()) : "",
         wordName = req.query.name ? req.query.name.trim() : "",
         groupName = req.query.groupname ? req.query.groupname.trim() : "",
         page = req.query.page ? parseInt(req.query.page) : 0,
@@ -79,7 +79,7 @@ router.get('/', async (req, res, next) => {
                 }
             },
             {
-                $match: { _id: mongoose.Types.ObjectId("5c96e2f9dc1ca21b68269245") } // search
+                $match: id ? { _id: id } : search // search
             },
             {
                 $skip: page * limit // pagination skip
