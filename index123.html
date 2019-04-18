@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+
+    <style>
+        @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+        @import url('https://fonts.googleapis.com/css?family=Montserrat|Open+Sans');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .container {
+            font-family: 'Open Sans', sans-serif;
+        }
+        .list {
+            background: #34495E;
+            color: #fff;
+            list-style: none;
+            margin: 10px;
+            border-radius: 5px;
+            box-shadow: 0 22px 70px 4px rgba(0, 0, 0, 0.56);
+            
+        }
+
+        .list>li {
+            padding: 10px;
+            cursor: pointer;
+
+        }
+
+        .list li:first-child,
+        .list li:last-child {
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+        }
+
+        .list li:last-child {
+            border-bottom-left-radius: 5px;
+            border-bottom-right-radius: 5px;
+        }
+
+        .list li:hover:not(.thead):not(.thead-second) {
+            background-color: #344350;
+        }
+
+        .list>li:not(.thead-second)>div {
+            display: grid;
+            grid-template-columns: 30px 1fr 30px;
+            align-items: center;
+        }
+
+        .list>li.thead>div {
+            grid-template-columns: 30px 1fr 110px;
+        }
+
+        .list>li:not(.thead)>div p {
+            font-size: 1.25em;
+            font-weight: bold;
+        }
+
+        .thead {
+            background: #22282d;
+        }
+
+        .thead-second {
+            background: #303c46;
+        }
+
+        .list>li.thead-second>div {
+            display: grid;
+            grid-template-rows: 1fr;
+            grid-row-gap: 10px;
+        }
+
+        /* .list input{
+            visibility: hidden;
+        } */
+        .checkbox {
+            position: relative;
+            cursor: pointer;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        .checkbox>span {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 15px;
+            width: 15px;
+            background-color: #f2fdc5;
+        }
+
+        .checkbox>span:after {
+            content: "";
+            position: absolute;
+            display: none;
+        }
+
+        .checkbox input:checked~span:after {
+            display: block;
+        }
+
+        .checkbox input:checked~span {
+            background-color: #b3b167;
+        }
+
+        .checkbox span:after {
+            left: 5px;
+            top: 2px;
+            width: 3px;
+            height: 6px;
+            border: solid white;
+            border-width: 0 3px 3px 0;
+            -webkit-transform: rotate(45deg);
+            -ms-transform: rotate(45deg);
+            transform: rotate(45deg);
+        }
+
+        .element-right {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .element-right>button {
+            margin-left: 10px;
+        }
+
+        .textbox {
+            font-family: 'Montserrat', sans-serif;
+            padding: 5px;
+            outline: none;
+            background: #303c46;
+            color: #fff;
+            border: none;
+            border-bottom: 1px solid #fff;
+            font-size: 1.15em;
+            letter-spacing: 2px;
+            transition: all 0.5s ease;
+        }
+
+        .textbox::-webkit-input-placeholder {
+            /* Chrome/Opera/Safari */
+            font-style: italic;
+        }
+
+        .textbox::-moz-placeholder {
+            /* Firefox 19+ */
+            font-style: italic;
+        }
+
+        .textbox:-ms-input-placeholder {
+            /* IE 10+ */
+            font-style: italic;
+        }
+
+        .textbox:-moz-placeholder {
+            /* Firefox 18- */
+            font-style: italic;
+        }
+
+        .textbox::placeholder {
+            font-style: italic;
+        }
+
+        .textbox:focus {
+            border-bottom: 1px solid #e6e842;
+        }
+
+        .button {
+            font-family: 'Montserrat', sans-serif;
+            padding: 5px 15px;
+            background: #22282d;
+            color: #fff;
+            outline: none;
+            border: 1px solid #4e4747;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .button:active {
+            background: #fff;
+            color: #000;
+            -webkit-box-shadow: inset 0px 0px 5px #fff;
+            -moz-box-shadow: inset 0px 0px 5px #fff;
+            box-shadow: inset 0px 0px 5px #fff;
+        }
+
+        .margin-left-1 {
+            margin-left: 10px;
+        }
+
+        .button-icon {
+            cursor: pointer;
+            user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .button-icon-clickable:active {
+            background: #fff;
+            color: #000;
+            border-radius: 50%;
+        }
+
+        .float-right {
+            float: right;
+        }
+
+        .more-list {
+            list-style: none;
+            padding-left: 50px;
+            font-size: 0.9em;
+        }
+
+        .more-list>li>p {
+            line-height: 23px;
+        }      
+        
+        .back-page>.button-icon-clickable:active {
+            background: #000;
+            color: #fff;
+            border-radius: 50%;
+        }
+
+        .back-page>.material-icons {
+            font-size: 1.5em;
+        }
+
+        .header {
+            position: relative;
+            margin: 20px 10px;
+            display:flex;
+            align-items: center;
+            height: 37px;
+        }
+
+        .header > .title {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;    
+            text-align: center;
+            z-index: 1;
+        }
+        .header > .back-page {
+            position: absolute;
+            margin-top: 10px;
+            z-index: 2;
+        }
+        .bold {
+            font-weight: bold;
+        }
+        @media (min-width: 768px) {
+            .container{
+                width: 600px;
+                margin: 0 auto;
+            }
+            /* .list {
+                width: 600px;
+                margin: 10px auto;
+            } */
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="header">
+            <div class="back-page">
+                <i class="material-icons button-icon button-icon-clickable">arrow_back</i>
+            </div>
+            <div class="title">
+                    <h1>Aliquip</h1>
+            </div>
+        </div>
+
+        <ul class="list">
+            <li class="thead">
+                <div>
+                    <div>
+                        <i class="material-icons button-icon">check_box_outline_blank</i>
+                        <!-- <i class="material-icons">check_box</i> -->
+                    </div>
+                    <div>
+                        <p>Commodo elit</p>
+
+                    </div>
+                    <div>
+                        <i class="material-icons button-icon button-icon-clickable">search</i>
+                        <i class="material-icons button-icon button-icon-clickable margin-left-1">add</i>
+                        <i class="material-icons button-icon button-icon-clickable margin-left-1">expand_more</i>
+                        <!-- <i class="material-icons button-icon button-icon-clickable float-right">done_outline</i>
+                        <i class="material-icons button-icon button-icon-clickable float-right bold">delete</i> -->
+                    </div>
+                </div>
+            </li>
+            <!-- <li class="thead-second">
+                        <div>
+                                <input type="text" class="textbox" placeholder="Search..."> 
+                        </div>
+                    </li> -->
+            <!-- <li class="thead-second">
+                        <div>
+                            <input type="text" class="textbox" placeholder="Name">
+                            <input type="text" class="textbox" placeholder="Description">
+                            <div class="element-right">
+                                <button class="button">Add</button>
+                                <button class="button">Cancel</button>
+                            </div>
+                        </div>
+                    </li> -->
+            <li>
+                <div>
+                    <!-- <label class="checkbox">
+                                <input type="checkbox">
+                                <span></span>
+                            </label> -->
+                    <div>
+                        <!-- <i class="material-icons">check</i> -->
+                    </div>
+                    <div>
+                        <p>Anim ad</p>
+                        <i>pariatur proident esse mollit eiusmod officia incididunt laboris reprehenderit mollit.</i>
+                    </div>
+                    <!-- <div>
+                                    <i class="material-icons button-icon button-icon-clickable">edit</i>
+                                    <i class="material-icons button-icon button-icon-clickable">delete</i>
+                                    <i class="material-icons button-icon button-icon-clickable">more_horiz</i>
+                            </div> -->
+                </div>
+                <!-- <ul class="more-list">
+                            <li>
+                                <p>1. Ipsum non.</p>
+                                <p>2. Reprehenderit.</p>
+                                <p>3. Proident consequat.</p>
+                                <p>4. Sit amet tempor.</p>
+                                <p>5. Aliquip esse.</p>
+                            </li>
+                        </ul> -->
+            </li>
+            <li>
+                <div>
+                    <!-- <label class="checkbox">
+                                <input type="checkbox">
+                                <span></span>
+                            </label> -->
+                    <div>
+                        <!-- <i class="material-icons">check</i> -->
+                    </div>
+                    <div>
+                        <p>Dolore ex</p>
+                        <i>do consectetur consectetur veniam consequat quis qui in sit tempor eu ut velit.</i>
+                    </div>
+                    <!-- <div>
+                                    <i class="material-icons button-icon">edit</i>
+                                    <i class="material-icons button-icon">delete</i>
+                                    <i class="material-icons button-icon button-icon-clickable">more_horiz</i>
+                            </div> -->
+                </div>
+            </li>
+
+        </ul>        
+    </div>
+
+    <script>
+    
+    const text = "[date:today][datefrom:4/12/2019][dateto:4/17/2019][name:abcxyz][notingroup] today tomorrow yesterday name asdsd";
+
+    const regex_getDate = /\[date:(.+?)\]/gi
+    const regex_getDateForm = /\[datefrom:(.+?)\]/gi
+
+    const regex_getDateTo = /\[dateto:(.+?)\]/gi
+
+    const regex_getName = /\[name:(.+?)\]/gi
+    const regex_getNotInGroup = /\[notingroup\]/gi
+
+    const regex_query = /[\s](.+)(?!\[.+?\])/gmi
+
+    console.log(regex_query.exec(text));
+    </script>
+</body>
+
+</html>
