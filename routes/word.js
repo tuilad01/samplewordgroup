@@ -80,12 +80,14 @@ router.get('/', async (req, res, next) => {
             },
             {
                 $match: id ? { _id: id } : search // search
+            }, {
+                $sort: { createdAt: -1 }
             },
             {
                 $skip: page * limit // pagination skip
             }, {
                 $limit: limit // pagination limit
-            }
+            },
         ]);
 
         //console.log(words);
