@@ -65,6 +65,13 @@ router.get('/', async (req, res, next) => {
         search["words.name"] = { $regex: wordName, $options: "i" };
     }
 
+    //check group has in word
+    if (req.query.haschild === "true") {
+        search.words = { $exists: true, $ne: [] }
+    } else if (req.query.haschild === "false") {
+        search.words = { $exists: true, $eq: [] }
+    }
+
     try {
         const groups = await groupModel.aggregate([
             // {
