@@ -22,13 +22,13 @@ router.get('/', async (req, res, next) => {
         groupName = req.query.name ? req.query.name.trim() : "",
         wordName = req.query.wordname ? req.query.wordname.trim() : "",
         page = req.query.page ? parseInt(req.query.page) : 0,
-        limit = req.query.limit ? parseInt(req.query.limit) : 100,
+        limit = req.query.limit ? parseInt(req.query.limit) : 10000,
         fromDate = "",
         toDate = "",
         search = {};
 
-    if (limit > 100) {
-        limit = 100;
+    if (limit > 10000) {
+        limit = 10000;
     }
 
     // Form Date
