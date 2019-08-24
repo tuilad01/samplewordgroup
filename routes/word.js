@@ -104,6 +104,15 @@ router.get('/', async (req, res, next) => {
     }
 });
 
+router.get("/total", async (req, res, next) => {
+    try {
+        const count = await wordModel.count({});
+        res.json({count: count});
+    } catch (error) {
+        console.error(error);
+    }
+});
+
 // define the about route
 router.post('/', async (req, res, next) => {
     let arrError = [],
