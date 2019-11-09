@@ -308,4 +308,52 @@ router.delete("/", async (req, res, next) => {
     });
 });
 
+router.get('/all', async (req, res, next) => {
+    const find = {}
+    const { name, page, pagesize, fromdate, todate } = lowerCaseObjectKey(req.query)
+
+
+    if ( name ) {
+        find.name = { $regex: name, $options: "gi" }
+    }
+
+    if ( fromdate ) {
+        if (!find.createdAt) find.createdAt = {}
+        find.createdAt.$gte = new Date(fromdate)
+    }
+
+    if ( todate ) {
+        if (!find.createdAt) find.createdAt = {}
+        find.createdAt.$lt = new Date(todate)
+    }
+
+    try {
+        let query = groupModel
+            .find(find)
+            .select({ name: 1, description: 1, words: 1, createdAt: 1 })
+            .lean()
+            .populate({ path: "words", select: "name mean createdAt" })
+            .sort({ createdAt: -1 })
+
+            if ( page && pagesize ) {
+                query = query
+                .skip((page - 1) * pagesize)
+                .limit(pagesize)
+            }
+
+            const result = await query.exec();
+        return res.json(result);
+    } catch (error) {
+        return res.json([]);
+    }
+})
+
+function lowerCaseObjectKey(obj) {
+    const newObj = {}
+    for (var key in obj) {
+        newObj[key.toLowerCase()] = obj[key];
+    }
+    return newObj
+}
+
 module.exports = router

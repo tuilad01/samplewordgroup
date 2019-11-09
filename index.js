@@ -29,6 +29,14 @@ app.use(bodyParser.json())
 
 app.use(express.static('assets'));
 
+// toLowerCase Key object
+app.use(function (req, res, next) {
+    for (var key in req.query) {
+        req.query[key.toLowerCase()] = req.query[key];
+    }
+    next();
+});
+
 /**
  * Handle errors
  */

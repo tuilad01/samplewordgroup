@@ -106,8 +106,10 @@ router.get('/', async (req, res, next) => {
 
 router.get("/total", async (req, res, next) => {
     try {
-        const count = await wordModel.count({});
-        res.json({count: count});
+        const count = await wordModel
+        .count({})        
+
+        res.json({ count: count });
     } catch (error) {
         console.error(error);
     }
@@ -321,5 +323,53 @@ router.delete("/", async (req, res, next) => {
         saved: wordSaved
     });
 });
+
+router.get('/all', async (req, res, next) => {
+    const find = {}
+    const { name, page, pagesize, fromdate, todate } = lowerCaseObjectKey(req.query)
+
+
+    if ( name ) {
+        find.name = { $regex: name, $options: "gi" }
+    }
+
+    if ( fromdate ) {
+        if (!find.createdAt) find.createdAt = {}
+        find.createdAt.$gte = new Date(fromdate)
+    }
+
+    if ( todate ) {
+        if (!find.createdAt) find.createdAt = {}
+        find.createdAt.$lt = new Date(todate)
+    }
+
+    try {
+        let query = wordModel
+            .find(find)
+            .select({ name: 1, mean: 1, groups: 1, createdAt: 1 })
+            .lean()
+            .populate({ path: "groups", select: "name description createdAt" })
+            .sort({ createdAt: -1 })
+
+            if ( page && pagesize ) {
+                query = query
+                .skip((page - 1) * pagesize)
+                .limit(pagesize)
+            }
+
+            const result = await query.exec();
+        return res.json(result);
+    } catch (error) {
+        return res.json([]);
+    }
+})
+
+function lowerCaseObjectKey(obj) {
+    const newObj = {}
+    for (var key in obj) {
+        newObj[key.toLowerCase()] = obj[key];
+    }
+    return newObj
+}
 
 module.exports = router
