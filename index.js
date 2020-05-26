@@ -29,8 +29,8 @@ mongoose.connect('mongodb://admin:dbadmin123@ds151840.mlab.com:51840/dbword93822
 //mongoose.connect('mongodb://localhost:27017/test', { useNewUrlParser: true, useCreateIndex: true, });
 
 
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: false }));
+app.use(bodyParser.json({limit: '50mb'}))
 
 app.use(express.json({limit: '50mb'}));
 app.use(express.urlencoded({limit: '50mb'}));
