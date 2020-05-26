@@ -32,6 +32,9 @@ mongoose.connect('mongodb://admin:dbadmin123@ds151840.mlab.com:51840/dbword93822
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json())
 
+app.use(express.json({limit: '50mb'}));
+app.use(express.urlencoded({limit: '50mb'}));
+
 app.use(express.static('assets'));
 
 // toLowerCase Key object
