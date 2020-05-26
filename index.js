@@ -7,13 +7,14 @@ const PORT = process.env.PORT || 4000;
  */
 var wordRoute = require('./routes/word');
 var groupRoute = require('./routes/group');
+var archiveRoute = require('./routes/archive');
 
 
 /**
  * Models
  */
-const wordModel = require("./models/word");
-const groupModel = require("./models/group");
+// const wordModel = require("./models/word");
+// const groupModel = require("./models/group");
 
 const app = express();
 
@@ -56,6 +57,7 @@ app.use(function (req, res, next) {
 
 app.use('/word', wordRoute);
 app.use('/group', groupRoute);
+app.use('/archive', archiveRoute);
 
 
 app.get("/", (req, res, next) => {
