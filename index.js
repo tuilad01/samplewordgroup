@@ -1,6 +1,8 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
+const cors = require("cors");
+
 const PORT = process.env.PORT || 4000;
 /**
  * Route
@@ -17,6 +19,8 @@ var archiveRoute = require('./routes/archive');
 // const groupModel = require("./models/group");
 
 const app = express();
+
+app.use(cors());
 
 /**
  * Mongoose connection
@@ -46,14 +50,14 @@ app.use(function (req, res, next) {
 //     res.status(500).json({ error: err.message });
 // });
 
-app.use(function (req, res, next) {
-    res.header("Access-Control-Allow-Origin", "*");
-    // res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-    // res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-    res.header('Access-Control-Allow-Methods', '*');
-    res.header("Access-Control-Allow-Headers", "*");
-    next();
-});
+// app.use(function (req, res, next) {
+//     res.header("Access-Control-Allow-Origin", "*");
+//     // res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+//     // res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+//     res.header('Access-Control-Allow-Methods', '*');
+//     res.header("Access-Control-Allow-Headers", "*");
+//     next();
+// });
 
 app.use('/word', wordRoute);
 app.use('/group', groupRoute);
