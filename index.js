@@ -25,15 +25,17 @@ app.use(cors());
 /**
  * Mongoose connection
  */
-mongoose.connect('mongodb://admin:dbadmin123@ds151840.mlab.com:51840/dbword93822112018', { useNewUrlParser: true, useCreateIndex: true, });
+//mongoose.connect('mongodb://admin:dbadmin123@ds151840.mlab.com:51840/dbword93822112018', { useNewUrlParser: true, useCreateIndex: true, });
+
+mongoose.connect('mongodb+srv://admin:dbadmin123@dbword93822112018.lkbxv.mongodb.net/dbword93822112018?retryWrites=true&w=majority',  { useNewUrlParser: true, useCreateIndex: true, });
 //mongoose.connect('mongodb://localhost:27017/test', { useNewUrlParser: true, useCreateIndex: true, });
 
 
-app.use(bodyParser.urlencoded({ limit: '50mb', extended: false }));
-app.use(bodyParser.json({limit: '50mb'}))
+// app.use(bodyParser.urlencoded({ limit: '50mb', extended: false }));
+// app.use(bodyParser.json({limit: '50mb'}))
 
 app.use(express.json({limit: '50mb'}));
-app.use(express.urlencoded({limit: '50mb'}));
+app.use(express.urlencoded({limit: '50mb', extended: false}));
 
 app.use(express.static('assets'));
 
